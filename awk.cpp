@@ -35,7 +35,35 @@ class FileParser : public Parser {
 };
 
 class PatternParser : public Parser {
-
+  public :
+    std::string pattern = "";
+    PatternParser(std::string &str){
+    std::string def_pattern = "1"; // Default Pattern
+    int choice = 0;
+    for (int i = 0; i < str.length(); i++)
+    {
+        if (str[i] != '{')
+        {
+            if (str[i] != ' ')
+                pattern += str[i];
+        }
+        else
+        {
+            choice = 1;
+            break;
+        }
+    }
+    if (choice == 1)
+    {
+        if (pattern == "")
+            pattern = def_pattern;
+    }
+    else
+    {
+        std::cout << "Usage: " << " <pattern { action }> <filename>" << std::endl;
+        exit(0);
+    }
+  }
 };
 
 int main (int argc, char *argv[]) 
