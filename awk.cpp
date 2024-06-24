@@ -9,6 +9,7 @@ class Parser {
 };
 
 class FileParser : public Parser {
+
   public:
     std::vector<std::vector<std::string>> parsed;
     FileParser(std::string &&filename, char delimiter=' ') {
