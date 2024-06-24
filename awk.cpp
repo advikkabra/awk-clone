@@ -1,4 +1,7 @@
+#include <fstream>
 #include <iostream>
+#include <sstream>
+#include <utility>
 #include <vector>
 
 class Parser {
@@ -8,8 +11,27 @@ class Parser {
 class FileParser : public Parser {
   public:
     std::vector<std::vector<std::string>> parsed;
-    FileParser(std::string filename);
+    FileParser(std::string &&filename, char delimiter=' ') {
+      std::ifstream fin(filename);
 
+      if (!fin) {
+        std::cerr << "Error opening file" << std::endl;
+        return;
+      }
+
+      std::string line;
+      while (std::getline(fin, line)) {
+        std::stringstream ss(line);
+
+        std::vector<std::string> tokens;
+        std::string token;
+        while (std::getline(ss, token, delimiter)) {
+          tokens.push_back(token);
+        }
+
+        parsed.push_back(tokens);
+      }
+    }
 };
 
 class PatternParser : public Parser {
@@ -23,7 +45,8 @@ int main (int argc, char *argv[])
     return 1;
   } 
 
-  FileParser file(argv[2]);
+  FileParser file(std::move(argv[2]));
+
 
 
   return 0;
