@@ -1,10 +1,9 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include <utility>
 #include <vector>
-#include <memory>
-#include <optional>
 
 class Parser {
   // I guess this can have one function which takes in a string and splits it
@@ -78,35 +77,48 @@ public:
   virtual void run(const std::vector<std::string> &tokens) = 0;
 };
 
-// Only supports fields at the moment ($1 etc.)
-// DOES NOT YET SUPPORT $0
+// Only supports fields at the moment ($0, $1 etc.)
+// Always adds a delimiter of space whether or not comma was present b/w fields
 class PrintStmt : public Stmt {
 public:
   PrintStmt(std::string::const_iterator &it, const std::string &input): fields() {
-    std::optional<int> field;
-
+    bool is_field = false;
+    int field = -1;
     for (; it != input.cend() && *it != ';' && *it != '}'; ++it) {
-      if (field.has_value()) {
+      if (is_field) {
         if (!std::isdigit(*it)) {
-          if (field.value() > 0) fields.push_back(field.value());
-          field.reset();
+          if (field == -1) throw std::runtime_error("Syntax error!");
+
+          fields.push_back(field);
+          field = -1;
+          is_field = false;
         } else {
-          field = field.value() * 10 + (*it - '0');
-          continue;
+          if (field == -1) {
+            field = (*it - '0');
+          } else {
+            field = field * 10 + (*it - '0');
+          }
         }
       }
       
       // Potential field found.
-      if (*it == '$') field = 0;
+      if (*it == '$') is_field = true;
     }
 
-    if (field.has_value()) fields.push_back(field.value());
+    if (field != -1) fields.push_back(field);
   }
 
   void run(const std::vector<std::string> &tokens) {
-    const int max = tokens.size();
     for (const int field : fields) {
-      if (field <= max) std::cout << tokens[field - 1];
+      if (field == 0) {
+        for (int i = 0; i < tokens.size(); ++i) {
+          std::cout << tokens[i];
+          if (i != tokens.size() - 1) std::cout << ' ';
+        }
+      } else if (field <= tokens.size()) {
+        std::cout << tokens[field - 1];
+      }
+
       std::cout << ' ';
     }
   }
@@ -126,7 +138,7 @@ public:
     std::string stmt;
     for (; it != input.cend() && *it != '}'; ++it) {
       if (*it == ' ') continue;
-      if (stmt == "print") stmts.push_back(std::make_unique<PrintStmt>(it, input));
+      if (stmt == "print") stmts.push_back(new PrintStmt(it, input));
 
       // Statements are delimited by ';'
       if (*it == ';') {
@@ -146,7 +158,7 @@ public:
   }
 
 private:
-  std::vector<std::unique_ptr<Stmt>> stmts;
+  std::vector<Stmt*> stmts;
 };
 
 int main(int argc, char *argv[]) {
