@@ -45,6 +45,7 @@ private:
 class PatternParser : public Parser {
 public:
   PatternParser(const std::string &str) {
+    std::string pattern="";
     std::string def_pattern = "1"; // Default Pattern
     int choice = 0;
     for (int i = 0; i < str.length(); i++) {
@@ -59,16 +60,70 @@ public:
     if (choice == 1) {
       if (pattern == "")
         pattern = def_pattern;
+      std::string s = "";
+      for (int i = 0; i < pattern.length(); i++)
+      {
+        if(pattern[i]!='&' && s!=""){
+          vect_patterns.push_back(s);
+          s="";
+        }
+        else if(pattern[i]!='&')s+=pattern[i];
+      }
+      
     } else {
       std::cout << "Usage: " << " <pattern { action }> <filename>" << std::endl;
       exit(0);
     }
   }
+  bool Check_Pattern(std::string &str, int row_num){
+    bool val = true;
+  for(std::string pattern : vect_patterns){
+    if(pattern=="1")val = true;
+    else if(pattern=="0")val = false;
+    else if(pattern[0]=='/' && pattern[pattern.size()-1]=='/'){
+      std::string red_pattern = pattern.substr(1, pattern.size() - 2); //Reduced Pattern
+      size_t found = str.find(red_pattern);
+      if(found!=std::string::npos)return true;
+      val = false;
+    }
+    else if(pattern[0]=='N' && pattern[1]=='R'){
+      int num = stoi(pattern.substr(3));
+      switch (pattern[2])
+      {
+      case '>':
+        if(row_num<=num)val=false;
+        break;
+      case '<':
+        if(row_num>=num)val=false;
+        break;
+      case '=':
+        if(row_num!=num)val=false;
+        break;
+      case '>=':
+        if(row_num<num)val=false;
+        break;
+      case '<=':
+        if(row_num>num)val=false;
+        break;
+      default:
+        std::cout << "Invalid Pattern" << std::endl;
+        exit(0);
+        break;
+      }
+    }
+    else{
+      std::cout << "Invalid Pattern" << std::endl;
+      exit(0);
+    }
+    if(val==false)return false;
+  }
+  return true;
+  }
 
-  const std::string &get_pattern() const { return pattern; }
+  const std::vector<std::string> &get_pattern() const { return vect_patterns; }
 
 private:
-  std::string pattern = "";
+  std::vector<std::string> vect_patterns ;
 };
 
 
