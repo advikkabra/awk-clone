@@ -90,11 +90,14 @@ public:
         std::string red_pattern =
             pattern.substr(1, pattern.size() - 2); // Reduced Pattern
         val = false;
-        for (const std::string &str : tokens) {
-          size_t found = str.find(red_pattern);
-          if (found != std::string::npos)
-            val = true;
-        }
+        if (red_pattern == ".")
+          val = true;
+        else
+          for (const std::string &str : tokens) {
+            size_t found = str.find(red_pattern);
+            if (found != std::string::npos)
+              val = true;
+          }
       } else if (pattern[0] == 'N' && pattern[1] == 'R') {
         int num = stoi(pattern.substr(3));
         switch (pattern[2]) {
