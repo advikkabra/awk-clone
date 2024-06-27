@@ -63,11 +63,12 @@ public:
       std::string s = "";
       for (int i = 0; i < pattern.length(); i++)
       {
-        if(pattern[i]!='&' && s!=""){
+        if((pattern[i]!='&' || pattern[i]=='|') && s!=""){
           vect_patterns.push_back(s);
           s="";
+          if(pattern[i]=='|') op_type=1;
         }
-        else if(pattern[i]!='&')s+=pattern[i];
+        else if((pattern[i]!='&' || pattern[i]=='|'))s+=pattern[i];
       }
       
     } else {
@@ -76,8 +77,14 @@ public:
     }
   }
   bool Check_Pattern(std::string &str, int row_num){
-    bool val = true;
+    std::vector<bool> values;
   for(std::string pattern : vect_patterns){
+    bool val = true;
+    int is_not = 0;
+    if(pattern[0]=='!'){
+      is_not=1;
+      pattern.erase(0,1);
+    }
     if(pattern=="1")val = true;
     else if(pattern=="0")val = false;
     else if(pattern[0]=='/' && pattern[pattern.size()-1]=='/'){
@@ -115,15 +122,21 @@ public:
       std::cout << "Invalid Pattern" << std::endl;
       exit(0);
     }
-    if(val==false)return false;
+    if(is_not) val = !val;
+    values.push_back(val);
   }
-  return true;
+  bool ans = true;
+  for (int i = 0; i < values.size(); i++){
+    if(op_type==1) ans=ans||values[i];
+  }
+  return ans;
   }
 
   const std::vector<std::string> &get_pattern() const { return vect_patterns; }
 
 private:
   std::vector<std::string> vect_patterns ;
+  int op_type = 0;
 };
 
 
