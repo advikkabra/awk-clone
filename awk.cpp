@@ -45,7 +45,7 @@ private:
 class PatternParser : public Parser {
 public:
   PatternParser(const std::string &str) {
-    std::string pattern="";
+    std::string pattern = "";
     std::string def_pattern = "1"; // Default Pattern
     int choice = 0;
     for (int i = 0; i < str.length(); i++) {
@@ -61,84 +61,95 @@ public:
       if (pattern == "")
         pattern = def_pattern;
       std::string s = "";
-      for (int i = 0; i < pattern.length(); i++)
-      {
-        if((pattern[i]!='&' || pattern[i]=='|') && s!=""){
+      for (int i = 0; i < pattern.length(); i++) {
+        if ((pattern[i] != '&' || pattern[i] == '|') && s != "") {
           vect_patterns.push_back(s);
-          s="";
-          if(pattern[i]=='|') op_type=1;
-        }
-        else if((pattern[i]!='&' || pattern[i]=='|'))s+=pattern[i];
+          s = "";
+          if (pattern[i] == '|')
+            op_type = 1;
+        } else if ((pattern[i] != '&' || pattern[i] == '|'))
+          s += pattern[i];
       }
-      
+
     } else {
       std::cout << "Usage: " << " <pattern { action }> <filename>" << std::endl;
       exit(0);
     }
   }
-  bool Check_Pattern(std::string &str, int row_num){
+
+  bool check_pattern(const std::vector<std::string> &tokens, int row_num) {
     std::vector<bool> values;
-  for(std::string pattern : vect_patterns){
-    bool val = true;
-    int is_not = 0;
-    if(pattern[0]=='!'){
-      is_not=1;
-      pattern.erase(0,1);
-    }
-    if(pattern=="1")val = true;
-    else if(pattern=="0")val = false;
-    else if(pattern[0]=='/' && pattern[pattern.size()-1]=='/'){
-      std::string red_pattern = pattern.substr(1, pattern.size() - 2); //Reduced Pattern
-      size_t found = str.find(red_pattern);
-      if(found!=std::string::npos)return true;
-      val = false;
-    }
-    else if(pattern[0]=='N' && pattern[1]=='R'){
-      int num = stoi(pattern.substr(3));
-      switch (pattern[2])
-      {
-      case '>':
-        if(row_num<=num)val=false;
-        break;
-      case '<':
-        if(row_num>=num)val=false;
-        break;
-      case '=':
-        if(row_num!=num)val=false;
-        break;
-      case '>=':
-        if(row_num<num)val=false;
-        break;
-      case '<=':
-        if(row_num>num)val=false;
-        break;
-      default:
+    for (std::string pattern : vect_patterns) {
+      bool val = true;
+      int is_not = 0;
+      if (pattern[0] == '!') {
+        is_not = 1;
+        pattern.erase(0, 1);
+      }
+      if (pattern == "1")
+        val = true;
+      else if (pattern == "0")
+        val = false;
+      else if (pattern[0] == '/' && pattern[pattern.size() - 1] == '/') {
+        std::string red_pattern =
+            pattern.substr(1, pattern.size() - 2); // Reduced Pattern
+        size_t found = -1;
+        for (const std::string &str : tokens) {
+            found = str.find(red_pattern);
+            if (found != std::string::npos)
+              return true;
+        }
+        val = false;
+      } else if (pattern[0] == 'N' && pattern[1] == 'R') {
+        int num = stoi(pattern.substr(3));
+        switch (pattern[2]) {
+        case '>':
+          if (row_num <= num)
+            val = false;
+          break;
+        case '<':
+          if (row_num >= num)
+            val = false;
+          break;
+        case '=':
+          if (row_num != num)
+            val = false;
+          break;
+        case '>=':
+          if (row_num < num)
+            val = false;
+          break;
+        case '<=':
+          if (row_num > num)
+            val = false;
+          break;
+        default:
+          std::cout << "Invalid Pattern" << std::endl;
+          exit(0);
+          break;
+        }
+      } else {
         std::cout << "Invalid Pattern" << std::endl;
         exit(0);
-        break;
       }
+      if (is_not)
+        val = !val;
+      values.push_back(val);
     }
-    else{
-      std::cout << "Invalid Pattern" << std::endl;
-      exit(0);
+    bool ans = true;
+    for (int i = 0; i < values.size(); i++) {
+      if (op_type == 1)
+        ans = ans || values[i];
     }
-    if(is_not) val = !val;
-    values.push_back(val);
-  }
-  bool ans = true;
-  for (int i = 0; i < values.size(); i++){
-    if(op_type==1) ans=ans||values[i];
-  }
-  return ans;
+    return ans;
   }
 
   const std::vector<std::string> &get_pattern() const { return vect_patterns; }
 
 private:
-  std::vector<std::string> vect_patterns ;
+  std::vector<std::string> vect_patterns;
   int op_type = 0;
 };
-
 
 class Stmt {
 public:
@@ -149,13 +160,15 @@ public:
 // Always adds a delimiter of space whether or not comma was present b/w fields
 class PrintStmt : public Stmt {
 public:
-  PrintStmt(std::string::const_iterator &it, const std::string &input): fields() {
+  PrintStmt(std::string::const_iterator &it, const std::string &input)
+      : fields() {
     bool is_field = false;
     int field = -1;
     for (; it != input.cend() && *it != ';' && *it != '}'; ++it) {
       if (is_field) {
         if (!std::isdigit(*it)) {
-          if (field == -1) throw std::runtime_error("Syntax error!");
+          if (field == -1)
+            throw std::runtime_error("Syntax error!");
 
           fields.push_back(field);
           field = -1;
@@ -168,12 +181,14 @@ public:
           }
         }
       }
-      
+
       // Potential field found.
-      if (*it == '$') is_field = true;
+      if (*it == '$')
+        is_field = true;
     }
 
-    if (field != -1) fields.push_back(field);
+    if (field != -1)
+      fields.push_back(field);
   }
 
   void run(const std::vector<std::string> &tokens) {
@@ -181,7 +196,8 @@ public:
       if (field == 0) {
         for (int i = 0; i < tokens.size(); ++i) {
           std::cout << tokens[i];
-          if (i != tokens.size() - 1) std::cout << ' ';
+          if (i != tokens.size() - 1)
+            std::cout << ' ';
         }
       } else if (field <= tokens.size()) {
         std::cout << tokens[field - 1];
@@ -190,23 +206,27 @@ public:
       std::cout << ' ';
     }
   }
+
 private:
   std::vector<int> fields;
 };
 
 class ActionParser {
 public:
-  ActionParser(const std::string &input): stmts() {
+  ActionParser(const std::string &input) : stmts() {
     std::string::const_iterator it = input.cbegin();
 
     // Find start of action.
-    for (; it != input.cend() && *it != '{'; ++it) {}
+    for (; it != input.cend() && *it != '{'; ++it) {
+    }
 
     ++it;
     std::string stmt;
     for (; it != input.cend() && *it != '}'; ++it) {
-      if (*it == ' ') continue;
-      if (stmt == "print") stmts.push_back(new PrintStmt(it, input));
+      if (*it == ' ')
+        continue;
+      if (stmt == "print")
+        stmts.push_back(new PrintStmt(it, input));
 
       // Statements are delimited by ';'
       if (*it == ';') {
@@ -221,12 +241,13 @@ public:
   void run(const std::vector<std::string> &tokens) {
     for (int i = 0; i < stmts.size(); ++i) {
       stmts[i]->run(tokens);
-      if (i != stmts.size() - 1) std::cout << std::endl;
+      if (i != stmts.size() - 1)
+        std::cout << std::endl;
     }
   }
 
 private:
-  std::vector<Stmt*> stmts;
+  std::vector<Stmt *> stmts;
 };
 
 int main(int argc, char *argv[]) {
@@ -240,8 +261,10 @@ int main(int argc, char *argv[]) {
   PatternParser pattern(argv[1]);
   ActionParser action(argv[1]);
 
-  for (const auto &tokens : file.get_parsed()) {
-    action.run(tokens);
+  for (int i = 0; i < file.get_parsed().size(); ++i) {
+    if (!pattern.check_pattern(file.get_parsed()[i], i+1))
+      continue;
+    action.run(file.get_parsed()[i]);
     std::cout << std::endl;
   }
 
