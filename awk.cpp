@@ -147,17 +147,22 @@ public:
           break;
         }
       } else if (pattern[0] == '$') {
-        std::stringstream ss(pattern.substr(1));
-        int field;
-        ss >> field;
 
-        std::string compare;
-        ss  >> compare;
+        std::string lhs = "";
+        std::string rhs = "";
+        std::string compare = "";
+        for (int i = 1; i < pattern.size(); i++) {
+          if (pattern[i] == '>' || pattern[i] == '<' || pattern[i] == '=') {
+            compare += pattern[i];
+          } else if (compare == "") {
+            lhs += pattern[i];
+          } else {
+            rhs += pattern[i];
+          }
+        }
 
-        std::string rhs;
-        ss >> rhs;
+        int field = std::stoi(lhs);
 
-        // To find the type of rhs
         std::stringstream rhs_ss_int(rhs);
         int rhs_int;
 
@@ -198,7 +203,7 @@ public:
 
 private:
   std::vector<std::string> vect_patterns;
-  Operation op_type;
+  Operation op_type = Operation::AND;
 };
 
 class Stmt {
