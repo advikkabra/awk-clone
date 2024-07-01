@@ -146,6 +146,26 @@ public:
           exit(0);
           break;
         }
+      } else if (pattern[0] == 'N' && pattern[1] == 'F') {
+        int num = stoi(pattern.substr(3));
+        switch (pattern[2]) {
+        case '>':
+          if (tokens.size() <= num)
+            val = false;
+          break;
+        case '<':
+          if (tokens.size() >= num)
+            val = false;
+          break;
+        case '=':
+          if (tokens.size() != num)
+            val = false;
+          break;
+        default:
+          std::cout << "Invalid Pattern" << std::endl;
+          exit(0);
+          break;
+        }
       } else if (pattern[0] == '$') {
 
         std::string lhs = "";
