@@ -5,6 +5,34 @@
 #include <utility>
 #include <vector>
 
+enum class Operation {
+  AND,
+  OR,
+  NONE
+};
+
+template <typename T>
+bool compare_op(const std::string &lhs, const T &rhs, const std::string &op) {
+  std::stringstream ss(lhs);
+  T val;
+  ss >> val;
+
+  if (op == ">")
+    return val > rhs;
+  else if (op == "<")
+    return val < rhs;
+  else if (op == ">=")
+    return val >= rhs;
+  else if (op == "<=")
+    return val <= rhs;
+  else if (op == "==")
+    return val == rhs;
+  else if (op == "!=")
+    return val != rhs;
+
+  return false;
+}
+
 class FileParser {
 public:
   FileParser(std::string &&filename, char delimiter = ' ') {
@@ -61,7 +89,7 @@ public:
           vect_patterns.push_back(s);
           s = "";
           if (pattern[i] == '|')
-            op_type = 1;
+            op_type = Operation::OR;
         } else if ((pattern[i] != '&') && (pattern[i] != '|'))
           s += pattern[i];
       }
@@ -118,6 +146,32 @@ public:
           exit(0);
           break;
         }
+      } else if (pattern[0] == '$') {
+        std::stringstream ss(pattern.substr(1));
+        int field;
+        ss >> field;
+
+        std::string compare;
+        ss  >> compare;
+
+        std::string rhs;
+        ss >> rhs;
+
+        // To find the type of rhs
+        std::stringstream rhs_ss_int(rhs);
+        int rhs_int;
+
+        std::stringstream rhs_ss_double(rhs);
+        double rhs_double;
+
+        if (rhs_ss_int >> rhs_int && rhs_ss_int.eof()) {
+          val = compare_op<int>(tokens[field - 1], rhs_int, compare);
+        } else if (rhs_ss_double >> rhs_double && rhs_ss_double.eof()) {
+          val = compare_op<double>(tokens[field - 1], rhs_double, compare);
+        } else {
+          val = compare_op<std::string>(tokens[field - 1], rhs, compare);
+        }
+        
       } else {
         std::cout << "Invalid Pattern" << std::endl;
         exit(0);
@@ -127,12 +181,12 @@ public:
       values.push_back(val);
     }
     bool ans;
-    if (op_type == 0)
+    if (op_type == Operation::AND)
       ans = true;
     else
       ans = false;
     for (int i = 0; i < values.size(); i++) {
-      if (op_type == 1)
+      if (op_type == Operation::OR)
         ans = ans || values[i];
       else
         ans = ans && values[i];
@@ -144,7 +198,7 @@ public:
 
 private:
   std::vector<std::string> vect_patterns;
-  int op_type = 0;
+  Operation op_type;
 };
 
 class Stmt {
